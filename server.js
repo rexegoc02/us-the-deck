@@ -304,6 +304,9 @@ io.on('connection', socket => {
     room.players.push({ id: socket.id, name: (name || 'Player 2').trim().slice(0, 20), score: 0, hand: [] });
     socket.join(room.code);
 
+    // Tell Player 2 they joined so they land on the lobby screen (same as Player 1)
+    socket.emit('joined', { code: room.code, partnerName: room.players[0].name });
+
     // Build deck and start game immediately — no setup needed
     room.deck = buildDeck();
     room.players.forEach(p => { p.hand = deal(room.deck, 5); p.score = 0; });
@@ -318,7 +321,7 @@ io.on('connection', socket => {
     const room = bySocket(socket.id);
     if (!room || room.phase !== 'game') return;
     const pidx = room.players.findIndex(p => p.id === socket.id);
-    if (room.currentTurn !== pidx) return socket.emit('err', 'Not your turn!');
+    if (room.currentTurn !== pidx) return socket.emit('game_err', 'Not your turn!');
     const p = room.players[pidx];
     const ci = p.hand.findIndex(c => c.id === id);
     if (ci === -1) return;
