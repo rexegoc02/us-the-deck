@@ -284,6 +284,7 @@ function resolveWild(room, card, sid) {
 io.on('connection', socket => {
 
   socket.on('create', ({ name }) => {
+    if (bySocket(socket.id)) return; // already in a room, ignore duplicate
     const room = newRoom();
     room.players.push({ id: socket.id, name: (name || 'Player 1').trim().slice(0, 20), score: 0, hand: [] });
     socket.join(room.code);
@@ -291,8 +292,13 @@ io.on('connection', socket => {
   });
 
   socket.on('join', ({ code, name }) => {
+    // Ignore if this socket is already in any room (prevents double-click joining)
+    if (bySocket(socket.id)) return;
+
     const room = rooms.get(code?.toUpperCase().trim());
     if (!room) return socket.emit('err', 'Room not found — double-check the code!');
+    // Extra guard: prevent the same socket ID appearing twice in one room
+    if (room.players.some(p => p.id === socket.id)) return;
     if (room.players.length >= 2) return socket.emit('err', 'This room is already full!');
     if (room.phase !== 'lobby') return socket.emit('err', 'This game has already started.');
     room.players.push({ id: socket.id, name: (name || 'Player 2').trim().slice(0, 20), score: 0, hand: [] });
