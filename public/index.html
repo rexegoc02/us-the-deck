@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Us: The Deck 💌</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --pink:#d63384;--pink-l:#f9a8d4;--pink-ll:#fdf2f8;
+  --blue:#2563eb;--amber:#d97706;--teal:#0d9488;--purple:#7c3aed;
+  --gray:#6b7280;--dark:#1e1b4b;--white:#fff;
+  --card-r:12px;--btn-r:10px;
+  --memory-bg:#fdf2f8;--memory-b:#f9a8d4;--memory-t:#9d174d;
+  --duel-bg:#eff6ff;--duel-b:#93c5fd;--duel-t:#1e40af;
+  --luck-bg:#fffbeb;--luck-b:#fcd34d;--luck-t:#92400e;
+  --shield-bg:#f0fdfa;--shield-b:#5eead4;--shield-t:#134e4a;
+  --wild-bg:#f5f3ff;--wild-b:#c4b5fd;--wild-t:#4c1d95;
+}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fdf2f8;color:var(--dark);overflow:hidden}
+
+/* ── Screens ── */
+.screen{display:none;flex-direction:column;align-items:center;justify-content:center;height:100dvh;padding:24px;gap:14px}
+.screen.active{display:flex}
+
+/* ── Home ── */
+#screen-home .logo{font-size:48px;margin-bottom:4px}
+#screen-home h1{font-size:24px;font-weight:600;color:var(--dark)}
+#screen-home p{font-size:14px;color:var(--gray);text-align:center}
+.divider{display:flex;align-items:center;gap:12px;width:100%;max-width:320px;color:var(--gray);font-size:13px}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:#e9d5ff}
+input[type=text]{width:100%;max-width:320px;height:48px;border:1.5px solid var(--pink-l);border-radius:var(--btn-r);padding:0 16px;font-size:16px;outline:none;background:var(--white);color:var(--dark);transition:border-color .2s}
+input[type=text]:focus{border-color:var(--pink)}
+input[type=text]::placeholder{color:#c084fc}
+.btn{width:100%;max-width:320px;height:50px;border:none;border-radius:var(--btn-r);font-size:16px;font-weight:600;cursor:pointer;transition:transform .15s,opacity .15s}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:linear-gradient(135deg,var(--pink),#a855f7);color:#fff}
+.btn-secondary{background:var(--white);border:1.5px solid var(--pink);color:var(--pink)}
+.btn-sm{height:42px;font-size:14px}
+.err-msg{color:#dc2626;font-size:13px;text-align:center;min-height:18px;max-width:320px}
+
+/* ── Lobby ── */
+#screen-lobby .code-box{background:var(--white);border:2px dashed var(--pink-l);border-radius:16px;padding:24px 32px;text-align:center;cursor:pointer;transition:background .2s}
+#screen-lobby .code-box:active{background:#fce7f3}
+#screen-lobby .code-label{font-size:12px;color:var(--gray);margin-bottom:4px;text-transform:uppercase;letter-spacing:.08em}
+#screen-lobby .code-val{font-size:42px;font-weight:700;color:var(--pink);letter-spacing:.15em}
+#screen-lobby .code-hint{font-size:12px;color:var(--gray);margin-top:4px}
+.status-badge{background:var(--white);border:1px solid var(--pink-l);border-radius:20px;padding:8px 20px;font-size:14px;color:var(--gray)}
+.partner-chip{background:linear-gradient(135deg,#fce7f3,#f3e8ff);border:1px solid var(--pink-l);border-radius:20px;padding:8px 20px;font-size:14px;color:var(--dark);font-weight:500}
+
+/* ── Setup ── */
+#screen-setup{justify-content:flex-start;padding-top:max(40px,env(safe-area-inset-top))}
+.setup-header{text-align:center}
+.setup-header h2{font-size:20px;font-weight:700;color:var(--dark);margin-bottom:6px}
+.setup-header p{font-size:13px;color:var(--gray);line-height:1.5}
+.q-wrap{width:100%;max-width:380px}
+.q-label{font-size:12px;font-weight:600;color:var(--pink);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em}
+textarea{width:100%;border:1.5px solid var(--pink-l);border-radius:var(--btn-r);padding:12px;font-size:14px;font-family:inherit;resize:none;outline:none;background:var(--white);color:var(--dark);transition:border-color .2s}
+textarea:focus{border-color:var(--pink)}
+textarea::placeholder{color:#c084fc}
+#setup-waiting{display:none;text-align:center;font-size:14px;color:var(--gray);background:var(--white);border:1px solid var(--pink-l);border-radius:12px;padding:14px 20px}
+
+/* ── Game Board ── */
+#screen-game{display:none;flex-direction:column;padding:0;gap:0;justify-content:space-between;height:100dvh}
+#screen-game.active{display:flex}
+
+.op-area{background:linear-gradient(135deg,#1e1b4b,#2d1b69);color:#fff;padding:14px 20px 12px;display:flex;align-items:center;justify-content:space-between;padding-top:max(14px,env(safe-area-inset-top))}
+.op-name{font-size:15px;font-weight:600;display:flex;align-items:center;gap:6px}
+.op-score{font-size:22px;font-weight:700;color:#f9a8d4}
+.op-cards{font-size:12px;color:#c4b5fd;margin-top:2px;text-align:right}
+.shield-pip{font-size:14px}
+
+.center-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:12px}
+.deck-pile{width:70px;height:95px;background:linear-gradient(135deg,#1e1b4b,#7c3aed);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:4px 4px 0 rgba(0,0,0,.15)}
+.deck-count{font-size:18px;font-weight:700;color:#fff}
+.deck-label{font-size:10px;color:#c4b5fd;margin-top:2px}
+.turn-banner{background:var(--white);border:1.5px solid var(--pink-l);border-radius:20px;padding:8px 20px;font-size:14px;font-weight:600;color:var(--dark);text-align:center}
+.turn-banner.my-turn{background:linear-gradient(135deg,#fce7f3,#f3e8ff);border-color:var(--pink);color:var(--pink);animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(214,51,132,.3)}50%{box-shadow:0 0 0 6px rgba(214,51,132,0)}}
+.progress-bar-wrap{width:100%;max-width:280px}
+.progress-row{display:flex;justify-content:space-between;font-size:12px;color:var(--gray);margin-bottom:4px}
+.progress-track{height:8px;background:#e9d5ff;border-radius:4px;overflow:hidden;position:relative}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--pink),#a855f7);border-radius:4px;transition:width .5s}
+
+.my-area{background:var(--white);border-top:1px solid var(--pink-l);padding:12px 16px;padding-bottom:max(12px,env(safe-area-inset-bottom))}
+.my-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.my-score-label{font-size:12px;color:var(--gray)}
+.my-score-val{font-size:22px;font-weight:700;color:var(--pink);margin-left:4px}
+.my-name{font-size:14px;font-weight:600;color:var(--dark);display:flex;align-items:center;gap:4px}
+
+.hand{display:flex;gap:8px;overflow-x:auto;padding:4px 0 6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.hand::-webkit-scrollbar{display:none}
+
+.card{flex-shrink:0;width:82px;height:114px;border-radius:var(--card-r);border:2px solid transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 6px;cursor:pointer;transition:transform .15s,box-shadow .15s;user-select:none;text-align:center;position:relative}
+.card:active,.card.selected{transform:translateY(-14px);box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.card.selected::after{content:'▼';position:absolute;bottom:-18px;font-size:12px;color:var(--pink)}
+.card-icon{font-size:24px;margin-bottom:4px}
+.card-name{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.card-desc{font-size:9px;line-height:1.3;opacity:.8}
+.card.memory{background:var(--memory-bg);border-color:var(--memory-b);color:var(--memory-t)}
+.card.duel{background:var(--duel-bg);border-color:var(--duel-b);color:var(--duel-t)}
+.card.luck{background:var(--luck-bg);border-color:var(--luck-b);color:var(--luck-t)}
+.card.shield{background:var(--shield-bg);border-color:var(--shield-b);color:var(--shield-t)}
+.card.wild{background:var(--wild-bg);border-color:var(--wild-b);color:var(--wild-t)}
+
+#play-btn-wrap{height:36px;display:flex;align-items:center;justify-content:center;margin-top:4px}
+#play-btn{background:linear-gradient(135deg,var(--pink),#a855f7);color:#fff;border:none;border-radius:20px;padding:8px 32px;font-size:14px;font-weight:700;cursor:pointer;display:none;transition:transform .15s}
+#play-btn:active{transform:scale(.95)}
+
+/* ── Overlay ── */
+#overlay{position:fixed;inset:0;z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px;background:rgba(253,242,248,.97);backdrop-filter:blur(6px)}
+#overlay.show{display:flex;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.ov-box{background:var(--white);border:1px solid var(--pink-l);border-radius:20px;padding:28px 24px;width:100%;max-width:380px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px}
+.ov-icon{font-size:44px}
+.ov-title{font-size:18px;font-weight:700;color:var(--dark)}
+.ov-subtitle{font-size:13px;color:var(--gray);line-height:1.5}
+.ov-question{font-size:16px;font-weight:600;color:var(--dark);line-height:1.4;background:#fdf2f8;border-radius:12px;padding:16px;width:100%}
+.ov-hint{font-size:12px;color:var(--gray);font-style:italic}
+.ov-answer-wrap{width:100%;text-align:left}
+.ov-answer-label{font-size:12px;font-weight:600;color:var(--pink);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
+.ov-answer-text{font-size:15px;color:var(--dark);background:#fdf2f8;border-radius:10px;padding:12px;line-height:1.4}
+.judge-row{display:flex;gap:10px;width:100%}
+.btn-correct{flex:1;height:48px;background:#dcfce7;border:1.5px solid #86efac;color:#166534;font-size:14px;font-weight:700;border-radius:var(--btn-r);cursor:pointer;transition:background .15s}
+.btn-correct:active{background:#bbf7d0}
+.btn-wrong{flex:1;height:48px;background:#fef2f2;border:1.5px solid #fca5a5;color:#991b1b;font-size:14px;font-weight:700;border-radius:var(--btn-r);cursor:pointer;transition:background .15s}
+.btn-wrong:active{background:#fee2e2}
+
+/* dice */
+.dice{font-size:72px;line-height:1;margin:8px 0}
+.dice.rolling{animation:spin .12s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.luck-result{font-size:16px;font-weight:700;padding:10px 20px;border-radius:12px}
+.luck-result.pos{background:#dcfce7;color:#166534}
+.luck-result.neg{background:#fef2f2;color:#991b1b}
+.luck-result.neu{background:#fef3c7;color:#92400e}
+
+/* rps */
+.rps-row{display:flex;gap:14px;justify-content:center;margin:4px 0}
+.rps-btn{width:80px;height:80px;font-size:36px;background:var(--white);border:2px solid var(--pink-l);border-radius:16px;cursor:pointer;transition:background .15s,border-color .15s,transform .1s;display:flex;align-items:center;justify-content:center}
+.rps-btn:active{transform:scale(.9)}
+.rps-btn.chosen{background:#fce7f3;border-color:var(--pink)}
+.rps-reveal{font-size:14px;color:var(--gray);display:flex;align-items:center;gap:8px;justify-content:center}
+.rps-emoji{font-size:40px}
+
+/* tap */
+.tap-ready{font-size:14px;color:var(--gray);text-align:center}
+.tap-countdown{font-size:48px;font-weight:700;color:var(--dark);animation:pulse 1s ease-in-out infinite}
+#tap-go-btn{width:160px;height:160px;border-radius:50%;background:linear-gradient(135deg,var(--pink),#a855f7);border:none;font-size:22px;font-weight:700;color:#fff;cursor:pointer;display:none;animation:tapAppear .2s ease;box-shadow:0 8px 32px rgba(214,51,132,.4)}
+@keyframes tapAppear{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+#tap-go-btn:active{transform:scale(.92)}
+
+/* result */
+.result-badge{font-size:15px;font-weight:700;border-radius:12px;padding:12px 20px;width:100%}
+.result-badge.win{background:#dcfce7;color:#166534}
+.result-badge.loss{background:#fef2f2;color:#991b1b}
+.result-badge.tie{background:#fef3c7;color:#92400e}
+.result-badge.info{background:#f0f9ff;color:#0c4a6e}
+
+/* wild */
+.wild-effect{font-size:15px;font-weight:600;color:var(--purple);background:#f5f3ff;border-radius:12px;padding:14px;width:100%;line-height:1.4}
+
+/* peek */
+.peek-hand{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;padding:8px 0}
+.mini-card{border-radius:8px;padding:8px 10px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:4px;border:1.5px solid transparent}
+.mini-card.memory{background:var(--memory-bg);border-color:var(--memory-b);color:var(--memory-t)}
+.mini-card.duel{background:var(--duel-bg);border-color:var(--duel-b);color:var(--duel-t)}
+.mini-card.luck{background:var(--luck-bg);border-color:var(--luck-b);color:var(--luck-t)}
+.mini-card.shield{background:var(--shield-bg);border-color:var(--shield-b);color:var(--shield-t)}
+.mini-card.wild{background:var(--wild-bg);border-color:var(--wild-b);color:var(--wild-t)}
+.peek-timer{font-size:28px;font-weight:700;color:var(--pink)}
+
+/* ── Winner ── */
+#screen-over{background:linear-gradient(135deg,#1e1b4b,#7c3aed)}
+.win-confetti{font-size:48px;margin-bottom:8px;animation:bounce .6s ease-in-out infinite alternate}
+@keyframes bounce{from{transform:translateY(0)}to{transform:translateY(-12px)}}
+.win-title{font-size:28px;font-weight:700;color:#fff;text-align:center}
+.win-sub{font-size:15px;color:#c4b5fd;text-align:center}
+.score-cards{display:flex;gap:12px;margin:8px 0}
+.score-card{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:14px;padding:14px 20px;text-align:center;min-width:110px}
+.sc-name{font-size:12px;color:#c4b5fd;margin-bottom:4px}
+.sc-score{font-size:32px;font-weight:700;color:#fff}
+.sc-winner{background:rgba(249,168,212,.2);border-color:var(--pink-l)}
+.btn-restart{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:var(--btn-r);color:#fff;font-size:15px;font-weight:600;padding:14px 36px;cursor:pointer;transition:background .2s;margin-top:8px}
+.btn-restart:active{background:rgba(255,255,255,.25)}
+
+/* ── Toast ── */
+#toast{position:fixed;bottom:max(24px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#1e1b4b;color:#fff;border-radius:20px;padding:10px 20px;font-size:13px;z-index:500;display:none;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis}
+#toast.show{display:block;animation:toastIn .2s ease}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,12px)}to{opacity:1;transform:translate(-50%,0)}}
+
+/* ── Loading ── */
+.spinner{width:32px;height:32px;border:3px solid var(--pink-l);border-top-color:var(--pink);border-radius:50%;animation:spin 0.7s linear infinite}
+</style>
+</head>
+<body>
+
+<!-- ── HOME ── -->
+<div id="screen-home" class="screen active">
+  <div class="logo">💌</div>
+  <h1>Us: The Deck</h1>
+  <p>A card game built around your love story</p>
+  <input id="name-input" type="text" placeholder="Your name..." maxlength="20" autocomplete="off" style="margin-top:8px">
+  <button class="btn btn-primary" id="create-btn">Create Room</button>
+  <div class="divider">or</div>
+  <input id="code-input" type="text" placeholder="Enter room code..." maxlength="4" autocomplete="off" style="text-transform:uppercase;letter-spacing:.1em">
+  <button class="btn btn-secondary" id="join-btn">Join Room</button>
+  <p class="err-msg" id="home-err"></p>
+</div>
+
+<!-- ── LOBBY ── -->
+<div id="screen-lobby" class="screen">
+  <div class="logo">💌</div>
+  <h1 style="font-size:20px">Room created!</h1>
+  <p style="font-size:13px;color:var(--gray)">Share this code with your partner</p>
+  <div class="code-box" id="copy-code" onclick="copyCode()">
+    <div class="code-label">Room Code</div>
+    <div class="code-val" id="code-display">----</div>
+    <div class="code-hint">tap to copy</div>
+  </div>
+  <div id="lobby-status" class="status-badge">⏳ Waiting for your partner...</div>
+</div>
+
+<!-- ── SETUP ── -->
+<div id="screen-setup" class="screen" style="overflow-y:auto">
+  <div class="setup-header">
+    <h2>✍️ Write 3 secret questions</h2>
+    <p>About yourself — your partner will answer them in the game!</p>
+  </div>
+  <div class="q-wrap" style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:380px">
+    <div>
+      <div class="q-label">Question 1</div>
+      <textarea id="q1" rows="2" placeholder="e.g. What's my comfort food?" maxlength="150"></textarea>
+    </div>
+    <div>
+      <div class="q-label">Question 2</div>
+      <textarea id="q2" rows="2" placeholder="e.g. What song do I always sing?" maxlength="150"></textarea>
+    </div>
+    <div>
+      <div class="q-label">Question 3</div>
+      <textarea id="q3" rows="2" placeholder="e.g. Where do I most want to travel?" maxlength="150"></textarea>
+    </div>
+    <button class="btn btn-primary" id="submit-q-btn">I'm Ready! 💌</button>
+    <div id="setup-waiting">⏳ Questions saved! Waiting for your partner...</div>
+    <p class="err-msg" id="setup-err"></p>
+  </div>
+</div>
+
+<!-- ── GAME ── -->
+<div id="screen-game" class="screen">
+  <!-- Opponent -->
+  <div class="op-area">
+    <div>
+      <div class="op-name" id="op-name">Partner <span id="op-shield" class="shield-pip" style="display:none">🛡️</span></div>
+      <div class="op-cards" id="op-cards">? cards</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:11px;color:#c4b5fd;margin-bottom:2px">SCORE</div>
+      <div class="op-score" id="op-score">0</div>
+    </div>
+  </div>
+
+  <!-- Center -->
+  <div class="center-area">
+    <div class="deck-pile">
+      <div class="deck-count" id="deck-left">40</div>
+      <div class="deck-label">DECK</div>
+    </div>
+    <div class="turn-banner" id="turn-banner">...</div>
+    <div class="progress-bar-wrap">
+      <div class="progress-row">
+        <span id="my-prog-label">You: 0</span>
+        <span style="color:var(--gray);font-size:12px">First to 10 wins!</span>
+        <span id="op-prog-label">Them: 0</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="my-progress" style="width:0%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- My Area -->
+  <div class="my-area">
+    <div class="my-row">
+      <div class="my-name" id="my-name">You <span id="my-shield" style="display:none">🛡️</span></div>
+      <div style="display:flex;align-items:baseline;gap:4px">
+        <span class="my-score-label">pts</span>
+        <span class="my-score-val" id="my-score">0</span>
+      </div>
+    </div>
+    <div class="hand" id="hand"></div>
+    <div id="play-btn-wrap">
+      <button id="play-btn">Play Card ✨</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── GAME OVER ── -->
+<div id="screen-over" class="screen">
+  <div class="win-confetti" id="win-emoji">🎉</div>
+  <div class="win-title" id="win-title">Winner!</div>
+  <div class="win-sub" id="win-sub"></div>
+  <div class="score-cards" id="score-cards"></div>
+  <button class="btn-restart" onclick="location.reload()">Play Again 💌</button>
+</div>
+
+<!-- ── OVERLAY ── -->
+<div id="overlay">
+  <div class="ov-box" id="ov-box"></div>
+</div>
+
+<!-- ── TOAST ── -->
+<div id="toast"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+let myId = null;
+let roomCode = null;
+let selectedCard = null;
+let overlayNeedsInput = false;
+let overlayPeek = false;
+let peekInterval = null;
+
+const gs = {
+  myIndex: null, myHand: [], myScore: 0, myName: '',
+  opName: '', opScore: 0, opCards: 0, deckLeft: 0,
+  currentTurn: 0, isMyTurn: false, shielded: false,
+  doubleActive: false, phase: null
+};
+
+// ── Screen management ────────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function showOverlay(html) {
+  document.getElementById('ov-box').innerHTML = html;
+  document.getElementById('overlay').classList.add('show');
+}
+function hideOverlay() {
+  if (overlayNeedsInput || overlayPeek) return;
+  document.getElementById('overlay').classList.remove('show');
+}
+function forceHideOverlay() {
+  overlayNeedsInput = false; overlayPeek = false;
+  if (peekInterval) { clearInterval(peekInterval); peekInterval = null; }
+  document.getElementById('overlay').classList.remove('show');
+}
+
+function toast(msg, dur = 2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
+function copyCode() {
+  if (!roomCode) return;
+  navigator.clipboard.writeText(roomCode).catch(() => {});
+  toast('Room code copied! 📋');
+}
+
+// ── Render game ───────────────────────────────────────────────────────────────
+function renderGame() {
+  document.getElementById('op-name').childNodes[0].textContent = gs.opName + ' ';
+  document.getElementById('op-shield').style.display = gs.opShielded ? '' : 'none';
+  document.getElementById('op-score').textContent = gs.opScore;
+  document.getElementById('op-cards').textContent = `${gs.opCards} card${gs.opCards !== 1 ? 's' : ''}`;
+  document.getElementById('my-name').childNodes[0].textContent = gs.myName + ' ';
+  document.getElementById('my-shield').style.display = gs.shielded ? '' : 'none';
+  document.getElementById('my-score').textContent = gs.myScore;
+  document.getElementById('deck-left').textContent = gs.deckLeft;
+
+  const myPct = Math.min(100, gs.myScore * 10);
+  document.getElementById('my-progress').style.width = myPct + '%';
+  document.getElementById('my-prog-label').textContent = `You: ${gs.myScore}`;
+  document.getElementById('op-prog-label').textContent = `${gs.opName}: ${gs.opScore}`;
+
+  const banner = document.getElementById('turn-banner');
+  if (gs.isMyTurn) {
+    banner.textContent = '✨ Your turn — play a card!';
+    banner.className = 'turn-banner my-turn';
+  } else {
+    banner.textContent = `⏳ ${gs.opName}'s turn...`;
+    banner.className = 'turn-banner';
+  }
+
+  renderHand();
+}
+
+function renderHand() {
+  const hand = document.getElementById('hand');
+  hand.innerHTML = '';
+  gs.myHand.forEach(card => {
+    const el = document.createElement('div');
+    el.className = `card ${card.type}${selectedCard === card.id ? ' selected' : ''}`;
+    el.dataset.id = card.id;
+    const desc = card.question ? truncate(card.question, 42) : (card.desc || card.subtype || '');
+    el.innerHTML = `<div class="card-icon">${card.icon}</div><div class="card-name">${card.name}</div><div class="card-desc">${desc}</div>`;
+    if (gs.isMyTurn) {
+      el.onclick = () => selectCard(card.id);
+    } else {
+      el.style.opacity = '.6';
+      el.style.cursor = 'default';
+    }
+    hand.appendChild(el);
+  });
+  updatePlayBtn();
+}
+
+function truncate(str, n) {
+  return str.length > n ? str.slice(0, n) + '…' : str;
+}
+
+function selectCard(id) {
+  selectedCard = selectedCard === id ? null : id;
+  renderHand();
+}
+
+function updatePlayBtn() {
+  const btn = document.getElementById('play-btn');
+  btn.style.display = (selectedCard && gs.isMyTurn) ? 'block' : 'none';
+}
+
+// ── Socket incoming ───────────────────────────────────────────────────────────
+socket.on('connect', () => { myId = socket.id; });
+
+socket.on('created', ({ code }) => {
+  roomCode = code;
+  document.getElementById('code-display').textContent = code;
+  showScreen('screen-lobby');
+});
+
+socket.on('joined', ({ code, partnerName }) => {
+  roomCode = code;
+  showScreen('screen-lobby');
+  document.getElementById('lobby-status').innerHTML = `🤝 Connected with <strong>${partnerName}</strong>!`;
+});
+
+socket.on('ready', ({ names }) => {
+  document.getElementById('lobby-status').innerHTML = `🥰 Both players ready — <strong>${names[0]}</strong> & <strong>${names[1]}</strong>!`;
+});
+
+socket.on('phase', phase => {
+  if (phase === 'setup') showScreen('screen-setup');
+  if (phase === 'game') { forceHideOverlay(); showScreen('screen-game'); }
+});
+
+socket.on('state', data => {
+  Object.assign(gs, data);
+  gs.opShielded = data.opShielded || false; // server should add this
+  if (gs.phase === 'game') {
+    renderGame();
+    if (!overlayNeedsInput && !overlayPeek) hideOverlay();
+  }
+});
+
+socket.on('qsaved', () => {
+  document.getElementById('submit-q-btn').disabled = true;
+  document.getElementById('setup-waiting').style.display = 'block';
+});
+
+socket.on('err', msg => {
+  const home = document.getElementById('home-err');
+  if (home.closest('.screen').classList.contains('active')) home.textContent = msg;
+  else toast('⚠️ ' + msg);
+});
+
+// ── Card events ───────────────────────────────────────────────────────────────
+socket.on('played', ({ card, by, byIdx }) => {
+  const isMe = byIdx === gs.myIndex;
+  if (!isMe) toast(`${by} played a ${card.name} card!`);
+  selectedCard = null;
+  updatePlayBtn();
+});
+
+socket.on('memoryq', ({ card, askerId, askerName }) => {
+  const isAsker = askerId === socket.id;
+  overlayNeedsInput = true;
+  if (isAsker) {
+    showOverlay(`
+      <div class="ov-icon">💌</div>
+      <div class="ov-title">Memory Card</div>
+      ${card.subtype === 'custom' ? `<div class="ov-hint">Written by ${card.ownerName}</div>` : ''}
+      <div class="ov-question">${card.question}</div>
+      <p id="ov-waiting" style="font-size:13px;color:var(--gray)">⏳ Waiting for ${gs.opName}'s answer...</p>
+      <div id="ov-judge" style="display:none;width:100%;display:none;flex-direction:column;gap:10px">
+        <div class="ov-answer-wrap">
+          <div class="ov-answer-label">They said:</div>
+          <div class="ov-answer-text" id="ov-answer-text">...</div>
+        </div>
+        <div class="judge-row">
+          <button class="btn-correct" onclick="doJudge(true)">✓ Correct!<br><span style="font-size:11px;opacity:.7">+2 pts to them</span></button>
+          <button class="btn-wrong" onclick="doJudge(false)">✗ Wrong!<br><span style="font-size:11px;opacity:.7">+1 pt to me</span></button>
+        </div>
+      </div>
+    `);
+  } else {
+    showOverlay(`
+      <div class="ov-icon">💌</div>
+      <div class="ov-title">Memory Card</div>
+      <div class="ov-hint">Question from ${askerName}</div>
+      <div class="ov-question">${card.question}</div>
+      ${card.subtype === 'custom' ? `<div class="ov-hint">About ${card.ownerName}</div>` : ''}
+      <textarea id="answer-input" rows="2" placeholder="Type your answer..." maxlength="200" style="width:100%"></textarea>
+      <button class="btn btn-primary btn-sm" style="max-width:100%" onclick="submitAnswer()">Submit Answer</button>
+    `);
+  }
+});
+
+socket.on('memoryanswerreceived', ({ answer, answererName }) => {
+  const w = document.getElementById('ov-waiting');
+  const j = document.getElementById('ov-judge');
+  const a = document.getElementById('ov-answer-text');
+  if (w) w.style.display = 'none';
+  if (a) a.textContent = answer;
+  if (j) { j.style.display = 'flex'; }
+});
+
+socket.on('memoryjudged', ({ correct, pts, scorerName }) => {
+  overlayNeedsInput = false;
+  const emoji = correct ? '✅' : '❌';
+  showOverlay(`
+    <div class="ov-icon">${emoji}</div>
+    <div class="ov-title">${correct ? 'Correct!' : 'Wrong!'}</div>
+    <div class="result-badge ${correct ? 'win' : 'loss'}">+${pts} pts → ${scorerName}</div>
+  `);
+  setTimeout(() => { if (!overlayNeedsInput) forceHideOverlay(); }, 2500);
+});
+
+socket.on('luckresolve', ({ card, roll, pd, od, note, playerName, opName }) => {
+  const diceEmoji = ['','⚀','⚁','⚂','⚃','⚄','⚅'];
+  const myName = gs.myName;
+  let resultText = '', cls = 'neu';
+
+  if (pd > 0) { resultText = `+${pd} pt${pd !== 1 ? 's' : ''} for ${playerName}`; cls = 'pos'; }
+  else if (pd < 0) { resultText = `${pd} pt${Math.abs(pd) !== 1 ? 's' : ''} for ${playerName}`; cls = 'neg'; }
+  else if (od > 0) { resultText = `+${od} pt${od !== 1 ? 's' : ''} for ${opName}`; cls = 'pos'; }
+  else { resultText = 'No change this time!'; cls = 'neu'; }
+
+  if (od < 0) resultText += ` · ${od} pts for ${opName}`;
+
+  showOverlay(`
+    <div class="ov-icon">🎲</div>
+    <div class="ov-title">Luck Card</div>
+    <div class="ov-subtitle">${card.desc}</div>
+    <div class="dice" id="dice-el">⚀</div>
+    <div class="luck-result ${cls}" id="luck-result" style="display:none">${resultText}</div>
+    ${note ? `<div class="ov-hint">${note}</div>` : ''}
+  `);
+
+  let count = 0;
+  const el = document.getElementById('dice-el');
+  const interval = setInterval(() => {
+    if (el) el.textContent = diceEmoji[Math.floor(Math.random() * 6) + 1];
+    count++;
+    if (count >= 14) {
+      clearInterval(interval);
+      if (el) el.textContent = diceEmoji[roll];
+      const res = document.getElementById('luck-result');
+      if (res) res.style.display = 'block';
+    }
+  }, 90);
+});
+
+socket.on('shieldset', ({ playerName, desc }) => {
+  showOverlay(`
+    <div class="ov-icon">🛡️</div>
+    <div class="ov-title">Shield Activated!</div>
+    <div class="ov-subtitle">${playerName} is now protected</div>
+    <div class="result-badge info">${desc}</div>
+  `);
+  setTimeout(() => forceHideOverlay(), 2300);
+});
+
+socket.on('wildresolve', ({ card, msg }) => {
+  if (card.subtype === 'peek') {
+    // Peek is handled by 'peek' event for the peeker; show generic message to partner
+    if (!overlayPeek) {
+      showOverlay(`<div class="ov-icon">👀</div><div class="ov-title">Peek!</div><div class="ov-subtitle">${msg}</div>`);
+      setTimeout(() => forceHideOverlay(), 5200);
+    }
+    return;
+  }
+  showOverlay(`
+    <div class="ov-icon">${card.icon}</div>
+    <div class="ov-title">Wild Card!</div>
+    <div class="wild-effect">${msg}</div>
+  `);
+  setTimeout(() => forceHideOverlay(), 2500);
+});
+
+socket.on('peek', ({ hand }) => {
+  overlayPeek = true;
+  const cards = hand.map(c =>
+    `<div class="mini-card ${c.type}">${c.icon} ${c.name}</div>`
+  ).join('');
+  let secs = 5;
+  showOverlay(`
+    <div class="ov-icon">👀</div>
+    <div class="ov-title">Peeking at partner's hand!</div>
+    <div class="peek-hand">${cards}</div>
+    <div class="peek-timer" id="peek-sec">5</div>
+  `);
+  peekInterval = setInterval(() => {
+    secs--;
+    const el = document.getElementById('peek-sec');
+    if (el) el.textContent = secs;
+    if (secs <= 0) {
+      clearInterval(peekInterval); peekInterval = null;
+      overlayPeek = false;
+      forceHideOverlay();
+    }
+  }, 1000);
+});
+
+socket.on('rpsstart', ({ card }) => {
+  overlayNeedsInput = true;
+  showOverlay(`
+    <div class="ov-icon">✊</div>
+    <div class="ov-title">Rock Paper Scissors!</div>
+    <div class="ov-subtitle">Winner gets 2 points. Pick secretly!</div>
+    <div class="rps-row">
+      <button class="rps-btn" onclick="pickRPS('rock')" id="rps-rock">✊</button>
+      <button class="rps-btn" onclick="pickRPS('paper')" id="rps-paper">✋</button>
+      <button class="rps-btn" onclick="pickRPS('scissors')" id="rps-scissors">✌️</button>
+    </div>
+    <p id="rps-status" style="font-size:13px;color:var(--gray);min-height:18px"></p>
+  `);
+});
+
+socket.on('rpsresult', ({ choices, names, winnerId, winnerName }) => {
+  overlayNeedsInput = false;
+  const [pid1, pid2] = Object.keys(choices);
+  const emojis = { rock: '✊', paper: '✋', scissors: '✌️' };
+  const label = winnerId ? `🏆 ${winnerName} wins +2 pts!` : "🤝 It's a tie!";
+  const cls = winnerId === socket.id ? 'win' : (winnerId ? 'loss' : 'tie');
+  showOverlay(`
+    <div class="ov-icon">🎲</div>
+    <div class="ov-title">Result!</div>
+    <div class="rps-reveal">
+      <div><div class="rps-emoji">${emojis[choices[pid1]]}</div><div style="font-size:12px;color:var(--gray)">${names[pid1]}</div></div>
+      <span style="font-size:20px;color:var(--gray)">vs</span>
+      <div><div class="rps-emoji">${emojis[choices[pid2]]}</div><div style="font-size:12px;color:var(--gray)">${names[pid2]}</div></div>
+    </div>
+    <div class="result-badge ${cls}">${label}</div>
+  `);
+  setTimeout(() => forceHideOverlay(), 3000);
+});
+
+socket.on('tapstart', ({ card }) => {
+  overlayNeedsInput = true;
+  showOverlay(`
+    <div class="ov-icon">⚡</div>
+    <div class="ov-title">Speed Duel!</div>
+    <div class="tap-ready">Get ready... A button is about to appear!<br><strong>Tap it first to win 2 pts!</strong></div>
+    <div style="margin:12px 0">
+      <button id="tap-go-btn" onclick="doTap()">TAP!</button>
+    </div>
+    <p id="tap-status" style="font-size:13px;color:var(--gray);min-height:18px"></p>
+  `);
+});
+
+socket.on('tapgo', () => {
+  const btn = document.getElementById('tap-go-btn');
+  if (btn) btn.style.display = 'block';
+});
+
+socket.on('tapresult', ({ winnerId, winnerName }) => {
+  overlayNeedsInput = false;
+  const isMe = winnerId === socket.id;
+  showOverlay(`
+    <div class="ov-icon">${isMe ? '🏆' : '😅'}</div>
+    <div class="ov-title">${isMe ? 'You got it!' : 'Too slow!'}</div>
+    <div class="result-badge ${isMe ? 'win' : 'loss'}">${winnerName} tapped first! +2 pts</div>
+  `);
+  setTimeout(() => forceHideOverlay(), 2500);
+});
+
+socket.on('gameover', ({ winner, winnerId }) => {
+  forceHideOverlay();
+  const isMe = winnerId === socket.id;
+  document.getElementById('win-emoji').textContent = isMe ? '🏆' : '💌';
+  document.getElementById('win-title').textContent = isMe ? `You won, ${winner}! 🎉` : `${winner} wins! 🎊`;
+  document.getElementById('win-sub').textContent = isMe ? 'Pick the next activity, love!' : 'You decide what to do next! 💕';
+  document.getElementById('score-cards').innerHTML = `
+    <div class="score-card ${gs.myScore >= gs.opScore ? 'sc-winner' : ''}">
+      <div class="sc-name">${gs.myName}</div>
+      <div class="sc-score">${gs.myScore}</div>
+    </div>
+    <div class="score-card ${gs.opScore > gs.myScore ? 'sc-winner' : ''}">
+      <div class="sc-name">${gs.opName}</div>
+      <div class="sc-score">${gs.opScore}</div>
+    </div>
+  `;
+  showScreen('screen-over');
+});
+
+socket.on('partnerleft', ({ name }) => {
+  forceHideOverlay();
+  toast(`💔 ${name} disconnected. Waiting for reconnect...`, 6000);
+});
+
+// ── User actions ──────────────────────────────────────────────────────────────
+document.getElementById('create-btn').onclick = () => {
+  const name = document.getElementById('name-input').value.trim();
+  if (!name) { document.getElementById('home-err').textContent = 'Please enter your name!'; return; }
+  socket.emit('create', { name });
+};
+
+document.getElementById('join-btn').onclick = () => {
+  const name = document.getElementById('name-input').value.trim();
+  const code = document.getElementById('code-input').value.trim().toUpperCase();
+  if (!name) { document.getElementById('home-err').textContent = 'Please enter your name!'; return; }
+  if (code.length < 4) { document.getElementById('home-err').textContent = 'Enter the 4-letter room code!'; return; }
+  socket.emit('join', { name, code });
+};
+
+document.getElementById('name-input').onkeydown = e => { if (e.key === 'Enter') document.getElementById('create-btn').click(); };
+document.getElementById('code-input').onkeydown = e => { if (e.key === 'Enter') document.getElementById('join-btn').click(); };
+
+document.getElementById('submit-q-btn').onclick = () => {
+  const qs = [
+    document.getElementById('q1').value,
+    document.getElementById('q2').value,
+    document.getElementById('q3').value
+  ].filter(q => q.trim());
+  if (qs.length < 1) { document.getElementById('setup-err').textContent = 'Write at least 1 question!'; return; }
+  socket.emit('questions', { qs });
+};
+
+document.getElementById('play-btn').onclick = () => {
+  if (!selectedCard || !gs.isMyTurn) return;
+  socket.emit('play', { id: selectedCard });
+  selectedCard = null;
+  updatePlayBtn();
+};
+
+// Global handlers called from overlay HTML
+function doJudge(correct) {
+  overlayNeedsInput = false;
+  socket.emit('judge', { correct });
+}
+
+function submitAnswer() {
+  const inp = document.getElementById('answer-input');
+  if (!inp || !inp.value.trim()) { toast('Type your answer first!'); return; }
+  socket.emit('memoryanswer', { answer: inp.value.trim() });
+  inp.disabled = true;
+  document.querySelector('#ov-box button.btn').disabled = true;
+  document.querySelector('#ov-box button.btn').textContent = '✓ Answer sent!';
+}
+
+function pickRPS(choice) {
+  socket.emit('rpschoice', { choice });
+  ['rock','paper','scissors'].forEach(c => {
+    const btn = document.getElementById(`rps-${c}`);
+    if (btn) { btn.disabled = true; if (c === choice) btn.classList.add('chosen'); }
+  });
+  const st = document.getElementById('rps-status');
+  if (st) st.textContent = '⏳ Waiting for partner...';
+}
+
+function doTap() {
+  socket.emit('tap');
+  const btn = document.getElementById('tap-go-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '✓'; }
+}
+</script>
+</body>
+</html>
